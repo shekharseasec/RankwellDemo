@@ -38,7 +38,7 @@ const AdminLogin = () => {
             const data = await response.json();
 
             if (response.ok) { // localStorage.setItem('adminToken', data.token);
-                window.location.href = '/dashboard';
+                window.location.href = 'admin/dashboard';
             } else {
                 setError(data.message || 'Login failed');
             }
