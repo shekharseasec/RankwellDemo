@@ -18,5 +18,7 @@ public interface OrganizationService {
 		    );
 	  
 	  Organization getOrganizationDetails(Long id);
+
+	  Organization getOrganizationDetails();
 	  
 }

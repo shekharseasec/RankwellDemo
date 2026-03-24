@@ -6,4 +6,6 @@ import com.spring.rankwelldemo.entity.Organization;
 
 public interface OrganizationRepository extends JpaRepository<Organization, Long>  {
 
+	Organization findTopByOrderByIdAsc();
+
 }
