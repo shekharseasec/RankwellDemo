@@ -100,8 +100,6 @@ const OrganizationDetails = ({onBack}) => {
 
     return (
         <div className="max-w-full">
-
-
             <div className="bg-white rounded-lg shadow overflow-hidden">
                 {/* Banner image */}
                 <Banner src={orgBrandMedia}/> {/* Logo, name, about */}
@@ -184,7 +182,7 @@ const OrganizationDetails = ({onBack}) => {
                 </div>
 
                 {/* Metadata */}
-                <div className="px-6 py-4 bg-gray-100 border-t rounded-b-lg flex items-center justify-between text-xs text-gray-500">
+                {/* <div className="px-6 py-4 bg-gray-100 border-t rounded-b-lg flex items-center justify-between text-xs text-gray-500">
                     <div> {
                         createdAt && (
                             <div>
@@ -201,7 +199,7 @@ const OrganizationDetails = ({onBack}) => {
                         <span className="font-semibold">
                             {id}</span>
                     </div>
-                </div>
+                </div> */}
             </div>
         </div>
     );
