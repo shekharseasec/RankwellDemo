@@ -18,14 +18,12 @@ import {
     List
 } from 'lucide-react';
 import OrganizationForm from './OrganizationForm.jsx';
-import OrganizationGrid from './OrganizationGrid.jsx';
 import OrganizationDetails from './OrganizationDetails.jsx';
 
 const AdminDashboard = () => {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [activePage, setActivePage] = useState('dashboard');
     const [organizations, setOrganizations] = useState([]);
-    const [selectedOrg, setSelectedOrg] = useState(null);
     const [orgData, setOrgData] = useState(null);
 
     const organizationDetails = {
@@ -87,15 +85,7 @@ const AdminDashboard = () => {
         setActivePage('org-grid');
     };
 
-    const handleOrgClick = (org) => {
-        setSelectedOrg(org);
-        setActivePage('org-detail');
-    };
-
-    const handleBackToGrid = () => {
-        setSelectedOrg(null);
-        setActivePage('org-grid');
-    };
+   
 
     const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
 
@@ -106,12 +96,12 @@ const AdminDashboard = () => {
             icon: Home
         }, {
             id: 'org-form',
-            label: 'Add Organization',
+            label: 'Edit Organization ',
             icon: Building2
         }, {
-            id: 'org-grid',
-            label: 'Organizations List',
-            icon: LayoutGrid
+            id: 'org-details',
+            label: 'Organization Details',
+            icon: Building2
         },
     ];
 
@@ -164,7 +154,7 @@ const AdminDashboard = () => {
                             }
                             className={
                                 `w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors ${
-                                    activePage === item.id ? 'bg-gray-800 text-white border-r-4 border-indigo-500' : ''
+                                    activePage === item.id ? 'bg-gray-800 text-white border-r-4 border-orange-500' : ''
                                 }`
                         }>
                             <item.icon className="w-5 h-5"/> {
@@ -181,7 +171,6 @@ const AdminDashboard = () => {
                     sidebarOpen && (
                         <div className="text-xs text-gray-500">
                             <p>Rankwell Admin Panel</p>
-                            <p>Version 1.0.0</p>
                         </div>
                     )
                 } </div>
@@ -211,7 +200,7 @@ const AdminDashboard = () => {
                                     activePage === 'org-grid' && 'Organizations List'
                                 }
                                     {
-                                    activePage === 'org-detail' && 'Organization Details'
+                                    activePage === 'org-details' && 'Organization Details'
                                 } </h1>
                             </div>
                             <div className="flex items-center space-x-4">
@@ -229,7 +218,7 @@ const AdminDashboard = () => {
                 </nav>
 
                 {/* Page Content */}
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto">
                     {
                     activePage === 'dashboard' && (
                         <DashboardContent orgData={orgData}
@@ -243,16 +232,10 @@ const AdminDashboard = () => {
                         <OrganizationForm onSubmit={handleAddOrganization}/>
                     )
                 }
+                   
                     {
-                    activePage === 'org-grid' && !selectedOrg && (
-                        <OrganizationGrid organizations={organizations}
-                            onOrgClick={handleOrgClick}/>
-                    )
-                }
-                    {
-                    activePage === 'org-detail' && selectedOrg && (
-                        <OrganizationDetails organization={selectedOrg}
-                            onBack={handleBackToGrid}/>
+                    activePage === 'org-details' && (
+                        <OrganizationDetails/>
                     )
                 } </main>
             </div>
@@ -263,7 +246,8 @@ const AdminDashboard = () => {
 // Dashboard Content Component
 const DashboardContent = ({orgData, organizationsCount}) => {
     return (
-        <div> {/* Stats Cards */}
+        <div className='p-4'> 
+            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div className="bg-white rounded-lg shadow p-6">
                     <div className="flex items-center justify-between">
