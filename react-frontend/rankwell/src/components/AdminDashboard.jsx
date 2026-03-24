@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
     LogOut,
     Users,
@@ -56,8 +56,7 @@ const AdminDashboard = () => {
         }
     };
 
-    useEffect(() => {
-        // Load organizations from localStorage
+    useEffect(() => { // Load organizations from localStorage
         const savedOrgs = localStorage.getItem('organizations');
         if (savedOrgs) {
             setOrganizations(JSON.parse(savedOrgs));
@@ -71,7 +70,6 @@ const AdminDashboard = () => {
     }, [organizations]);
 
     const handleLogout = () => {
-        localStorage.removeItem('adminToken');
         localStorage.removeItem('adminData');
         window.location.href = '/admin/login';
     };
@@ -82,7 +80,10 @@ const AdminDashboard = () => {
             id: Date.now(),
             createdAt: new Date().toISOString()
         };
-        setOrganizations([...organizations, orgWithId]);
+        setOrganizations([
+            ...organizations,
+            orgWithId
+        ]);
         setActivePage('org-grid');
     };
 
@@ -99,9 +100,19 @@ const AdminDashboard = () => {
     const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
 
     const menuItems = [
-        { id: 'dashboard', label: 'Dashboard', icon: Home },
-        { id: 'org-form', label: 'Add Organization', icon: Building2 },
-        { id: 'org-grid', label: 'Organizations List', icon: LayoutGrid },
+        {
+            id: 'dashboard',
+            label: 'Dashboard',
+            icon: Home
+        }, {
+            id: 'org-form',
+            label: 'Add Organization',
+            icon: Building2
+        }, {
+            id: 'org-grid',
+            label: 'Organizations List',
+            icon: LayoutGrid
+        },
     ];
 
     if (!orgData) {
@@ -115,68 +126,101 @@ const AdminDashboard = () => {
     return (
         <div className="min-h-screen bg-gray-100 flex">
             {/* Sidebar */}
-            <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gray-900 text-white transition-all duration-300 flex flex-col fixed h-full z-10`}>
+            <div className={
+                `${
+                    sidebarOpen ? 'w-64' : 'w-20'
+                } bg-gray-900 text-white transition-all duration-300 flex flex-col fixed h-full z-10`
+            }>
                 <div className="flex items-center justify-between p-4 border-b border-gray-800">
-                    {sidebarOpen && <h1 className="text-xl font-bold">{orgData.name}</h1>}
-                    <button
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                        className="p-2 rounded-lg hover:bg-gray-800"
-                    >
-                        {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                    {
+                    sidebarOpen && <h1 className="text-xl font-bold">
+                        {
+                        orgData.name
+                    }</h1>
+                }
+                    <button onClick={
+                            () => setSidebarOpen(!sidebarOpen)
+                        }
+                        className="p-2 rounded-lg hover:bg-gray-800">
+                        {
+                        sidebarOpen ? <X className="w-5 h-5"/> : <Menu className="w-5 h-5"/>
+                        }
                     </button>
                 </div>
 
                 <nav className="flex-1 mt-6">
-                    {menuItems.map((item) => (
-                        <button
-                            key={item.id}
-                            onClick={() => {
-                                setActivePage(item.id);
-                                if (item.id === 'org-grid') {
-                                    setSelectedOrg(null);
+                    {
+                    menuItems.map((item) => (
+                        <button key={
+                                item.id
+                            }
+                            onClick={
+                                () => {
+                                    setActivePage(item.id);
+                                    if (item.id === 'org-grid') {
+                                        setSelectedOrg(null);
+                                    }
                                 }
-                            }}
-                            className={`w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors ${
-                                activePage === item.id ? 'bg-gray-800 text-white border-r-4 border-indigo-500' : ''
-                            }`}
-                        >
-                            <item.icon className="w-5 h-5" />
-                            {sidebarOpen && <span className="ml-3">{item.label}</span>}
-                        </button>
-                    ))}
-                </nav>
+                            }
+                            className={
+                                `w-full flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors ${
+                                    activePage === item.id ? 'bg-gray-800 text-white border-r-4 border-indigo-500' : ''
+                                }`
+                        }>
+                            <item.icon className="w-5 h-5"/> {
+                            sidebarOpen && <span className="ml-3">
+                                {
+                                item.label
+                            }</span>
+                        } </button>
+                    ))
+                } </nav>
 
                 <div className="p-4 border-t border-gray-800">
-                    {sidebarOpen && (
+                    {
+                    sidebarOpen && (
                         <div className="text-xs text-gray-500">
                             <p>Rankwell Admin Panel</p>
                             <p>Version 1.0.0</p>
                         </div>
-                    )}
-                </div>
+                    )
+                } </div>
             </div>
 
             {/* Main Content */}
-            <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-20'}`}>
+            <div className={
+                `flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
+                    sidebarOpen ? 'ml-64' : 'ml-20'
+                }`
+            }>
                 {/* Navbar */}
                 <nav className="bg-white shadow-lg">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between h-16">
                             <div className="flex items-center">
                                 <h1 className="text-xl font-bold text-gray-800">
-                                    {activePage === 'dashboard' && `${orgData.name} Admin`}
-                                    {activePage === 'org-form' && 'Add New Organization'}
-                                    {activePage === 'org-grid' && 'Organizations List'}
-                                    {activePage === 'org-detail' && 'Organization Details'}
-                                </h1>
+                                    {
+                                    activePage === 'dashboard' && `${
+                                        orgData.name
+                                    } Admin`
+                                }
+                                    {
+                                    activePage === 'org-form' && 'Add New Organization'
+                                }
+                                    {
+                                    activePage === 'org-grid' && 'Organizations List'
+                                }
+                                    {
+                                    activePage === 'org-detail' && 'Organization Details'
+                                } </h1>
                             </div>
                             <div className="flex items-center space-x-4">
-                                <span className="text-gray-600">Welcome, {adminData.name || 'Admin'}</span>
-                                <button
-                                    onClick={handleLogout}
-                                    className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                                >
-                                    <LogOut className="w-4 h-4 mr-1" />
+                                <span className="text-gray-600">Welcome, {
+                                    adminData.name || 'Admin'
+                                }</span>
+                                <button onClick={handleLogout}
+                                    className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">
+                                    <LogOut className="w-4 h-4 mr-1"/>
                                     Logout
                                 </button>
                             </div>
@@ -186,46 +230,51 @@ const AdminDashboard = () => {
 
                 {/* Page Content */}
                 <main className="flex-1 overflow-y-auto p-6">
-                    {activePage === 'dashboard' && (
-                        <DashboardContent 
-                            orgData={orgData} 
-                            organizationsCount={organizations.length}
-                        />
-                    )}
-                    {activePage === 'org-form' && (
-                        <OrganizationForm onSubmit={handleAddOrganization} />
-                    )}
-                    {activePage === 'org-grid' && !selectedOrg && (
-                        <OrganizationGrid 
-                            organizations={organizations} 
-                            onOrgClick={handleOrgClick}
-                        />
-                    )}
-                    {activePage === 'org-detail' && selectedOrg && (
-                        <OrganizationDetails 
-                            organization={selectedOrg} 
-                            onBack={handleBackToGrid}
-                        />
-                    )}
-                </main>
+                    {
+                    activePage === 'dashboard' && (
+                        <DashboardContent orgData={orgData}
+                            organizationsCount={
+                                organizations.length
+                            }/>
+                    )
+                }
+                    {
+                    activePage === 'org-form' && (
+                        <OrganizationForm onSubmit={handleAddOrganization}/>
+                    )
+                }
+                    {
+                    activePage === 'org-grid' && !selectedOrg && (
+                        <OrganizationGrid organizations={organizations}
+                            onOrgClick={handleOrgClick}/>
+                    )
+                }
+                    {
+                    activePage === 'org-detail' && selectedOrg && (
+                        <OrganizationDetails organization={selectedOrg}
+                            onBack={handleBackToGrid}/>
+                    )
+                } </main>
             </div>
         </div>
     );
 };
 
 // Dashboard Content Component
-const DashboardContent = ({ orgData, organizationsCount }) => {
+const DashboardContent = ({orgData, organizationsCount}) => {
     return (
-        <div>
-            {/* Stats Cards */}
+        <div> {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div className="bg-white rounded-lg shadow p-6">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-gray-500 text-sm">Total Students</p>
-                            <p className="text-2xl font-bold text-gray-800">{orgData.stats.students.toLocaleString()}</p>
+                            <p className="text-2xl font-bold text-gray-800">
+                                {
+                                orgData.stats.students.toLocaleString()
+                            }</p>
                         </div>
-                        <Users className="w-8 h-8 text-orange-600" />
+                        <Users className="w-8 h-8 text-orange-600"/>
                     </div>
                 </div>
 
@@ -233,9 +282,12 @@ const DashboardContent = ({ orgData, organizationsCount }) => {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-gray-500 text-sm">Total Courses</p>
-                            <p className="text-2xl font-bold text-gray-800">{orgData.stats.courses}</p>
+                            <p className="text-2xl font-bold text-gray-800">
+                                {
+                                orgData.stats.courses
+                            }</p>
                         </div>
-                        <BookOpen className="w-8 h-8 text-orange-600" />
+                        <BookOpen className="w-8 h-8 text-orange-600"/>
                     </div>
                 </div>
 
@@ -243,9 +295,11 @@ const DashboardContent = ({ orgData, organizationsCount }) => {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-gray-500 text-sm">Revenue</p>
-                            <p className="text-2xl font-bold text-gray-800">${orgData.stats.revenue.toLocaleString()}</p>
+                            <p className="text-2xl font-bold text-gray-800">${
+                                orgData.stats.revenue.toLocaleString()
+                            }</p>
                         </div>
-                        <DollarSign className="w-8 h-8 text-orange-600" />
+                        <DollarSign className="w-8 h-8 text-orange-600"/>
                     </div>
                 </div>
 
@@ -253,9 +307,10 @@ const DashboardContent = ({ orgData, organizationsCount }) => {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-gray-500 text-sm">Organizations</p>
-                            <p className="text-2xl font-bold text-gray-800">{organizationsCount}</p>
+                            <p className="text-2xl font-bold text-gray-800">
+                                {organizationsCount}</p>
                         </div>
-                        <Briefcase className="w-8 h-8 text-orange-600" />
+                        <Briefcase className="w-8 h-8 text-orange-600"/>
                     </div>
                 </div>
             </div>
@@ -266,9 +321,18 @@ const DashboardContent = ({ orgData, organizationsCount }) => {
                     <h2 className="text-lg font-semibold text-gray-800">Organization Overview</h2>
                 </div>
                 <div className="p-6">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-2">{orgData.name}</h3>
-                    <p className="text-orange-600 mb-4">{orgData.tagline}</p>
-                    <p className="text-gray-600">{orgData.description}</p>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                        {
+                        orgData.name
+                    }</h3>
+                    <p className="text-orange-600 mb-4">
+                        {
+                        orgData.tagline
+                    }</p>
+                    <p className="text-gray-600">
+                        {
+                        orgData.description
+                    }</p>
                 </div>
             </div>
 
@@ -277,24 +341,30 @@ const DashboardContent = ({ orgData, organizationsCount }) => {
                 <div className="bg-white rounded-lg shadow">
                     <div className="p-6 border-b border-gray-200">
                         <div className="flex items-center">
-                            <Eye className="w-5 h-5 text-orange-600 mr-2" />
+                            <Eye className="w-5 h-5 text-orange-600 mr-2"/>
                             <h2 className="text-lg font-semibold text-gray-800">Our Vision</h2>
                         </div>
                     </div>
                     <div className="p-6">
-                        <p className="text-gray-600">{orgData.vision}</p>
+                        <p className="text-gray-600">
+                            {
+                            orgData.vision
+                        }</p>
                     </div>
                 </div>
 
                 <div className="bg-white rounded-lg shadow">
                     <div className="p-6 border-b border-gray-200">
                         <div className="flex items-center">
-                            <Target className="w-5 h-5 text-orange-600 mr-2" />
+                            <Target className="w-5 h-5 text-orange-600 mr-2"/>
                             <h2 className="text-lg font-semibold text-gray-800">Our Mission</h2>
                         </div>
                     </div>
                     <div className="p-6">
-                        <p className="text-gray-600">{orgData.mission}</p>
+                        <p className="text-gray-600">
+                            {
+                            orgData.mission
+                        }</p>
                     </div>
                 </div>
             </div>
@@ -303,12 +373,15 @@ const DashboardContent = ({ orgData, organizationsCount }) => {
             <div className="bg-white rounded-lg shadow mb-8">
                 <div className="p-6 border-b border-gray-200">
                     <div className="flex items-center">
-                        <Award className="w-5 h-5 text-orange-600 mr-2" />
+                        <Award className="w-5 h-5 text-orange-600 mr-2"/>
                         <h2 className="text-lg font-semibold text-gray-800">Our Values</h2>
                     </div>
                 </div>
                 <div className="p-6">
-                    <p className="text-gray-600">{orgData.values}</p>
+                    <p className="text-gray-600">
+                        {
+                        orgData.values
+                    }</p>
                 </div>
             </div>
 
@@ -316,19 +389,20 @@ const DashboardContent = ({ orgData, organizationsCount }) => {
             <div className="bg-white rounded-lg shadow mb-8">
                 <div className="p-6 border-b border-gray-200">
                     <div className="flex items-center">
-                        <BookOpen className="w-5 h-5 text-orange-600 mr-2" />
+                        <BookOpen className="w-5 h-5 text-orange-600 mr-2"/>
                         <h2 className="text-lg font-semibold text-gray-800">What We Offer</h2>
                     </div>
                 </div>
                 <div className="p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {orgData.offerings.map((item, index) => (
-                            <div key={index} className="flex items-center text-gray-600">
+                        {
+                        orgData.offerings.map((item, index) => (
+                            <div key={index}
+                                className="flex items-center text-gray-600">
                                 <span className="text-orange-500 mr-2">✓</span>
-                                {item}
-                            </div>
-                        ))}
-                    </div>
+                                {item} </div>
+                        ))
+                    } </div>
                 </div>
             </div>
 
@@ -339,9 +413,18 @@ const DashboardContent = ({ orgData, organizationsCount }) => {
                 </div>
                 <div className="p-6">
                     <div className="border-l-4 border-indigo-500 pl-4">
-                        <h3 className="text-xl font-semibold text-gray-800">{orgData.director.name}</h3>
-                        <p className="text-orange-600 mb-3">{orgData.director.title}</p>
-                        <p className="text-gray-600">{orgData.director.bio}</p>
+                        <h3 className="text-xl font-semibold text-gray-800">
+                            {
+                            orgData.director.name
+                        }</h3>
+                        <p className="text-orange-600 mb-3">
+                            {
+                            orgData.director.title
+                        }</p>
+                        <p className="text-gray-600">
+                            {
+                            orgData.director.bio
+                        }</p>
                     </div>
                 </div>
             </div>
