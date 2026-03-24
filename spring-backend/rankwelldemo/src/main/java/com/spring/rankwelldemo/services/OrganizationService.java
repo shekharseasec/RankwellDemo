@@ -17,4 +17,6 @@ public interface OrganizationService {
 		        String orgAbout
 		    );
 	  
+	  Organization getOrganizationDetails(Long id);
+	  
 }

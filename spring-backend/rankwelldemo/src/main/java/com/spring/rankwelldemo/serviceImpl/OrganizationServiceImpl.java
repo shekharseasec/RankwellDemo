@@ -80,4 +80,13 @@ public class OrganizationServiceImpl implements OrganizationService{
     	        throw new RuntimeException("File upload failed");
     	    }
     }
+
+    @Override
+    public Organization getOrganizationDetails(Long id) {
+        if (id == null) {
+            throw new RuntimeException("Organization id is required");
+        }
+        return organizationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Organization not found"));
+    }
 }
