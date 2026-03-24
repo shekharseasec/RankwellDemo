@@ -32,10 +32,10 @@ public class SecurityConfig {
 	    return http.build();
     }
 	
-	 	@Bean
-	    public CorsConfigurationSource corsConfigurationSource() {
+	 @Bean
+	 public CorsConfigurationSource corsConfigurationSource() {
 
-	        CorsConfiguration config = new CorsConfiguration();
+	       CorsConfiguration config = new CorsConfiguration();
 
 	        config.setAllowedOrigins(List.of("http://localhost:5173"));
 	        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
@@ -44,10 +44,8 @@ public class SecurityConfig {
 	        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 	        source.registerCorsConfiguration("/**", config);
 
-	        return source;
-	    }
-	
-	
+	      return source;
+	}
 
     @Bean
     public PasswordEncoder passwordEncoder() {
