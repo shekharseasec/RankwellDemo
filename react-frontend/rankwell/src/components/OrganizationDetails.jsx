@@ -1,293 +1,205 @@
-import React from 'react';
+import React, {useState, useEffect} from "react";
 import {
     ArrowLeft,
     Building2,
     Mail,
     Phone,
     MapPin,
-    Globe,
-    Calendar,
-    Users,
-    BookOpen,
-    Briefcase,
-    Target,
-    Eye,
-    Award,
-    User
-} from 'lucide-react';
+    Award
+} from "lucide-react";
 
-const OrganizationDetails = ({organization, onBack}) => {
-    return (
-        <div className="max-w-4xl mx-auto">
-            {/* Back Button */}
-            <button onClick={onBack}
-                className="flex items-center text-gray-600 hover:text-gray-900 mb-6">
-                <ArrowLeft className="w-5 h-5 mr-2"/>
-                Back to Organizations
-            </button>
+/**
+ * Pretty banner style with fallback when no banner
+ */
+const Banner = ({src}) => (src ? (
+    <div className="w-full h-52 md:h-72 bg-gray-100 rounded-t-lg overflow-hidden flex items-center justify-center">
+        <img src={src}
+            alt="Organization Banner"
+            className="object-cover w-full h-full"/>
+    </div>
+) : (
+    <div className="w-full h-52 md:h-72 bg-gradient-to-br from-orange-50 via-orange-100 to-orange-200 rounded-t-lg flex flex-col items-center justify-center relative overflow-hidden">
+        <span className="text-5xl md:text-7xl font-bold text-orange-200 opacity-40 absolute inset-0 pointer-events-none select-none">
+            Rankwell
+        </span>
+        <span className="text-lg font-medium text-orange-500 opacity-90 relative z-10">
+            Your journey begins here
+        </span>
+    </div>
+));
 
-            {/* Header with Logo */}
-            <div className="bg-white rounded-lg shadow mb-6">
-                <div className="p-6 border-b border-gray-200">
-                    <div className="flex items-start space-x-6">
-                        {/* Logo */}
-                        <div className="flex-shrink-0">
-                            {
-                            organization.logo ? (
-                                <img src={
-                                        organization.logo
-                                    }
-                                    alt={
-                                        organization.name
-                                    }
-                                    className="w-16 h-16 object-contain rounded-lg border-2 border-gray-200"/>
-                            ) : (
-                                <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center">
-                                    <Building2 className="w-12 h-12 text-white"/>
-                                </div>
-                            )
-                        } </div>
+// Default data in case API fails
+const DEFAULT_ORG = {
+    id: "default-1",
+    orgLogo: "",
+    orgBrandMedia: "",
+    orgName: "Rankwell",
+    orgEmail: "info@rankwell.in",
+    orgPhone: "+91 12345 67890",
+    orgAddress: "123, EdTech Street, Innovation City, India",
+    orgAbout: "Rankwell is a career boost platform for developers, nurturing the leaders and innovators of tomorrow. We offer a dynamic learning environment that fosters intellectual curiosity, creativity, and critical thinking.",
+    createdAt: new Date().toISOString()
+};
 
-                        {/* Title and Basic Info */}
-                        <div className="flex-1">
-                            <h1 className="text-2xl font-bold text-gray-800 mb-2">
-                                {
-                                organization.name
-                            } </h1>
-                            {
-                            organization.tagline && (
-                                <p className="text-indigo-600 mb-3">
-                                    {
-                                    organization.tagline
-                                }</p>
-                            )
-                        }
-                            <p className="text-gray-600">
-                                {
-                                organization.description
-                            }</p>
-                        </div>
-                    </div>
-                </div>
+const OrganizationDetails = ({onBack}) => {
+    const [org, setOrg] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-                {/* Contact Information */}
-                {
-                (organization.email || organization.phone || organization.address || organization.website) && (
-                    <div className="p-6 border-b border-gray-200">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Contact Information</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {
-                            organization.email && (
-                                <div className="flex items-center text-gray-600">
-                                    <Mail className="w-5 h-5 mr-2 text-indigo-600"/>
-                                    <span>{
-                                        organization.email
-                                    }</span>
-                                </div>
-                            )
-                        }
-                            {
-                            organization.phone && (
-                                <div className="flex items-center text-gray-600">
-                                    <Phone className="w-5 h-5 mr-2 text-indigo-600"/>
-                                    <span>{
-                                        organization.phone
-                                    }</span>
-                                </div>
-                            )
-                        }
-                            {
-                            organization.address && (
-                                <div className="flex items-center text-gray-600">
-                                    <MapPin className="w-5 h-5 mr-2 text-indigo-600"/>
-                                    <span>{
-                                        organization.address
-                                    }</span>
-                                </div>
-                            )
-                        }
-                            {
-                            organization.website && (
-                                <div className="flex items-center text-gray-600">
-                                    <Globe className="w-5 h-5 mr-2 text-indigo-600"/>
-                                    <a href={
-                                            organization.website
-                                        }
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-indigo-600 hover:underline">
-                                        {
-                                        organization.website
-                                    } </a>
-                                </div>
-                            )
-                        }
-                            {
-                            organization.establishedYear && (
-                                <div className="flex items-center text-gray-600">
-                                    <Calendar className="w-5 h-5 mr-2 text-indigo-600"/>
-                                    <span>Established: {
-                                        organization.establishedYear
-                                    }</span>
-                                </div>
-                            )
-                        } </div>
-                    </div>
-                )
+    // Fetch data on mount
+    useEffect(() => {
+        const fetchOrg = async () => {
+            setLoading(true);
+            try {
+                const res = await fetch("http://localhost:8080/organization/details");
+                if (! res.ok) 
+                    throw new Error("Network response was not ok");
+                
+
+                const data = await res.json();
+                // Use fetched data if present and valid
+                if (data && (data.orgName || data.org_name || data.orgEmail || data.org_email)) {
+                    setOrg(data);
+                } else {
+                    setOrg(DEFAULT_ORG); // fallback to default
+                }
+            } catch (err) {
+                setOrg(DEFAULT_ORG); // fallback to default on API error
             }
+            setLoading(false);
+        };
+        fetchOrg();
+    }, []);
 
-                {/* Vision & Mission */}
-                {
-                (organization.vision || organization.mission) && (
-                    <div className="grid md:grid-cols-2 gap-6 p-6 border-b border-gray-200">
+    if (loading) {
+        return (
+            <div className="max-w-3xl mx-auto flex flex-col items-center justify-center h-72">
+                <span className="text-orange-500 text-lg font-semibold">Loading organization details...</span>
+            </div>
+        );
+    }
+    if (!org) {
+        return (
+            <div className="max-w-3xl mx-auto flex flex-col items-center justify-center h-72">
+                <span className="text-red-500 text-lg font-semibold">Failed to load organization details.</span>
+            </div>
+        );
+    }
+
+    // Our API uses snake_case, handle both for future-proofing
+    const {
+        id,
+        orgLogo,
+        orgBrandMedia,
+        orgName,
+        orgEmail,
+        orgPhone,
+        orgAddress,
+        orgAbout,
+        createdAt
+    } = org;
+
+    return (
+        <div className="max-w-full">
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+                {/* Banner image */}
+                <Banner src={orgBrandMedia}/> {/* Logo, name, about */}
+                <div className="flex flex-col md:flex-row items-start space-y-4 md:space-y-0 md:space-x-6 px-6 pt-6 pb-2 bg-white relative z-10">
+                    <div className="flex-shrink-0">
                         {
-                        organization.vision && (
-                            <div>
-                                <div className="flex items-center mb-3">
-                                    <Eye className="w-5 h-5 text-indigo-600 mr-2"/>
-                                    <h2 className="text-lg font-semibold text-gray-800">Vision</h2>
-                                </div>
-                                <p className="text-gray-600">
-                                    {
-                                    organization.vision
-                                }</p>
+                        orgLogo ? (
+                            <div className="w-24 h-24 rounded-full bg-white shadow border-2 border-orange-100 flex items-center justify-center overflow-hidden">
+                                <img src={orgLogo}
+                                    alt={orgName}
+                                    className="object-contain w-full h-full"/>
                             </div>
-                        )
-                    }
-                        {
-                        organization.mission && (
-                            <div>
-                                <div className="flex items-center mb-3">
-                                    <Target className="w-5 h-5 text-indigo-600 mr-2"/>
-                                    <h2 className="text-lg font-semibold text-gray-800">Mission</h2>
-                                </div>
-                                <p className="text-gray-600">
-                                    {
-                                    organization.mission
-                                }</p>
+                        ) : (
+                            <div className="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center border-2 border-orange-200">
+                                <Building2 className="w-12 h-12 text-orange-400"/>
                             </div>
                         )
                     } </div>
-                )
-            }
+                    <div className="flex-1">
+                        <h1 className="text-3xl font-extrabold text-gray-800 mb-1">
+                            {orgName}</h1>
+                        {/* Optionally add tagline in future */}
+                        <p className="text-gray-600 mt-2">
+                            {orgAbout}</p>
+                    </div>
+                </div>
 
-                {/* Values */}
-                {
-                organization.values && (
-                    <div className="p-6 border-b border-gray-200">
-                        <div className="flex items-center mb-3">
-                            <Award className="w-5 h-5 text-indigo-600 mr-2"/>
-                            <h2 className="text-lg font-semibold text-gray-800">Values</h2>
+                {/* Contact Info section */}
+                <div className="bg-orange-50 border-y mt-4 py-5 px-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {
+                    orgEmail && (
+                        <div className="flex items-center text-gray-800">
+                            <Mail className="w-5 h-5 mr-2 text-orange-500"/>
+                            <span>{orgEmail}</span>
                         </div>
-                        <p className="text-gray-600">
-                            {
-                            organization.values
-                        }</p>
-                    </div>
-                )
-            }
-
-                {/* Director Information */}
-                {
-                (organization.directorName || organization.directorTitle || organization.directorBio) && (
-                    <div className="p-6 border-b border-gray-200">
-                        <div className="flex items-center mb-3">
-                            <User className="w-5 h-5 text-indigo-600 mr-2"/>
-                            <h2 className="text-lg font-semibold text-gray-800">Leadership</h2>
+                    )
+                }
+                    {
+                    orgPhone && (
+                        <div className="flex items-center text-gray-800">
+                            <Phone className="w-5 h-5 mr-2 text-orange-500"/>
+                            <span>{orgPhone}</span>
                         </div>
-                        <div className="border-l-4 border-indigo-500 pl-4">
-                            {
-                            organization.directorName && (
-                                <h3 className="text-xl font-semibold text-gray-800">
-                                    {
-                                    organization.directorName
-                                }</h3>
-                            )
-                        }
-                            {
-                            organization.directorTitle && (
-                                <p className="text-indigo-600 mb-3">
-                                    {
-                                    organization.directorTitle
-                                }</p>
-                            )
-                        }
-                            {
-                            organization.directorBio && (
-                                <p className="text-gray-600">
-                                    {
-                                    organization.directorBio
-                                }</p>
-                            )
-                        } </div>
-                    </div>
-                )
-            }
-
-                {/* Offerings */}
-                {
-                organization.offerings && organization.offerings.length > 0 && (
-                    <div className="p-6 border-b border-gray-200">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">What We Offer</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {
-                            organization.offerings.map((offering, index) => (
-                                <div key={index}
-                                    className="flex items-center text-gray-600">
-                                    <span className="text-indigo-500 mr-2">✓</span>
-                                    {offering} </div>
-                            ))
-                        } </div>
-                    </div>
-                )
-            }
-
-                {/* Statistics */}
-                {
-                organization.stats && (
-                    <div className="p-6">
-                        <h2 className="text-lg font-semibold text-gray-800 mb-4">Statistics</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-gray-50 rounded-lg p-4 text-center">
-                                <Users className="w-8 h-8 text-indigo-600 mx-auto mb-2"/>
-                                <p className="text-2xl font-bold text-gray-800">
-                                    {
-                                    organization.stats.students || 0
-                                }</p>
-                                <p className="text-sm text-gray-500">Total Students</p>
-                            </div>
-                            <div className="bg-gray-50 rounded-lg p-4 text-center">
-                                <BookOpen className="w-8 h-8 text-indigo-600 mx-auto mb-2"/>
-                                <p className="text-2xl font-bold text-gray-800">
-                                    {
-                                    organization.stats.courses || 0
-                                }</p>
-                                <p className="text-sm text-gray-500">Total Courses</p>
-                            </div>
-                            <div className="bg-gray-50 rounded-lg p-4 text-center">
-                                <Briefcase className="w-8 h-8 text-indigo-600 mx-auto mb-2"/>
-                                <p className="text-2xl font-bold text-gray-800">
-                                    {
-                                    organization.stats.instructors || 0
-                                }</p>
-                                <p className="text-sm text-gray-500">Instructors</p>
-                            </div>
+                    )
+                }
+                    {
+                    orgAddress && (
+                        <div className="flex items-center text-gray-800 col-span-2">
+                            <MapPin className="w-5 h-5 mr-2 text-orange-500"/>
+                            <span>{orgAddress}</span>
                         </div>
+                    )
+                } </div>
+
+                {/* Values / highlight area - using About for now */}
+                <div className="px-6 py-6">
+                    <div className="flex items-center mb-4">
+                        <Award className="w-5 h-5 text-orange-500 mr-2"/>
+                        <span className="text-lg font-semibold text-gray-800">Why Rankwell?</span>
                     </div>
-                )
-            }
+                    <ul className="list-disc ml-8 text-gray-700 space-y-1">
+                        <li>
+                            <span>
+                                Inspiring educational environment for certification & career boost.
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                Focus on innovation and leadership for tomorrow’s professionals.
+                            </span>
+                        </li>
+                        <li>
+                            <span>
+                                "{
+                                orgAbout && orgAbout.length > 100 ? orgAbout.substring(0, 100) + "..." : orgAbout
+                            }"
+                            </span>
+                        </li>
+                    </ul>
+                </div>
 
                 {/* Metadata */}
-                <div className="p-6 bg-gray-50 rounded-b-lg">
-                    <p className="text-xs text-gray-500">
-                        Created on: {
-                        new Date(organization.createdAt).toLocaleString()
-                    } </p>
-                    <p className="text-xs text-gray-500">
-                        Organization ID: {
-                        organization.id
-                    } </p>
-                </div>
+                {/* <div className="px-6 py-4 bg-gray-100 border-t rounded-b-lg flex items-center justify-between text-xs text-gray-500">
+                    <div> {
+                        createdAt && (
+                            <div>
+                                Created on:{" "}
+                                <span className="font-semibold">
+                                    {
+                                    new Date(createdAt).toLocaleString()
+                                } </span>
+                            </div>
+                        )
+                    } </div>
+                    <div>
+                        Organization ID:
+                        <span className="font-semibold">
+                            {id}</span>
+                    </div>
+                </div> */}
             </div>
         </div>
     );

@@ -1,485 +1,303 @@
-import React, { useState } from 'react';
-import { Save, X, Building2, Mail, Phone, MapPin, Globe, Calendar, Upload, Image as ImageIcon } from 'lucide-react';
+import React, {useState} from 'react';
+import axios from 'axios';
 
-const OrganizationForm = ({ onSubmit, onCancel }) => {
+/**
+ * Example menu items (hardcoded for a real navbar look)
+ */
+import {Home, Info, Image} from 'lucide-react';
+
+const NAV_MENU = [
+    {
+        label: 'Home',
+        icon: <Home className="w-5 h-5 text-white"/>
+    }, {
+        label: 'About',
+        icon: <Info className="w-5 h-5 text-white"/>
+    }, {
+        label: 'Gallery',
+        icon: <Image className="w-5 h-5 text-white"/>
+    }
+];
+
+const OrganizationForm = () => {
     const [formData, setFormData] = useState({
-        name: '',
-        tagline: '',
-        description: '',
-        vision: '',
-        mission: '',
-        values: '',
-        directorName: '',
-        directorTitle: '',
-        directorBio: '',
-        email: '',
-        phone: '',
-        address: '',
-        website: '',
-        establishedYear: '',
-        logo: null,
-        logoPreview: null,
-        offerings: [''],
-        stats: {
-            students: 0,
-            courses: 0,
-            instructors: 0
-        }
+        orgName: '',
+        orgEmail: '',
+        orgPhone: '',
+        orgAddress: '',
+        orgLogo: null,
+        orgBrandMedia: null,
+        orgAbout: ''
     });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
-    const handleLogoUpload = (e) => {
-        const file = e.target.files[0];
-        if (file && (file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/jpg')) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setFormData({
-                    ...formData,
-                    logo: file,
-                    logoPreview: reader.result
-                });
-            };
-            reader.readAsDataURL(file);
-        } else {
-            alert('Please upload a valid image file (JPEG, PNG, or JPG)');
-        }
-    };
+    // To preview selected image files
+    const [logoPreview, setLogoPreview] = useState(null);
+    const [brandMediaPreview, setBrandMediaPreview] = useState(null);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        if (name.includes('.')) {
-            const [parent, child] = name.split('.');
-            setFormData({
-                ...formData,
-                [parent]: {
-                    ...formData[parent],
-                    [child]: value
-                }
-            });
-        } else {
-            setFormData({
-                ...formData,
-                [name]: value
-            });
+        const {name, value} = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleFileChange = (e) => {
+        const {name, files} = e.target;
+        const file = files[0];
+        setFormData((prev) => ({
+            ...prev,
+            [name]: file
+        }));
+        // Preview for images
+        if (name === 'orgLogo' && file) {
+            setLogoPreview(URL.createObjectURL(file));
+        }
+        if (name === 'orgBrandMedia' && file) {
+            setBrandMediaPreview(URL.createObjectURL(file));
         }
     };
 
-    const handleOfferingChange = (index, value) => {
-        const newOfferings = [...formData.offerings];
-        newOfferings[index] = value;
-        setFormData({ ...formData, offerings: newOfferings });
+    const triggerLogoInput = () => {
+        document.getElementById("orgLogoInput").click();
     };
 
-    const addOffering = () => {
-        setFormData({
-            ...formData,
-            offerings: [...formData.offerings, '']
-        });
+    const triggerBannerInput = () => {
+        document.getElementById("orgBannerInput").click();
     };
 
-    const removeOffering = (index) => {
-        const newOfferings = formData.offerings.filter((_, i) => i !== index);
-        setFormData({ ...formData, offerings: newOfferings });
-    };
-
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const filteredOfferings = formData.offerings.filter(offering => offering.trim() !== '');
-        
-        const orgDataToSave = {
-            ...formData,
-            offerings: filteredOfferings,
-            logo: formData.logoPreview // Store the base64 image data
-        };
-        
-        delete orgDataToSave.logoPreview; // Remove preview field
-        
-        onSubmit(orgDataToSave);
+        setLoading(true);
+        setError('');
+        setSuccess('');
+
+        const submitData = new FormData();
+        submitData.append('orgName', formData.orgName);
+        submitData.append('orgEmail', formData.orgEmail);
+        submitData.append('orgPhone', formData.orgPhone);
+        submitData.append('orgAddress', formData.orgAddress);
+        submitData.append('orgAbout', formData.orgAbout);
+
+        if (formData.orgLogo) {
+            submitData.append('orgLogo', formData.orgLogo);
+        }
+        if (formData.orgBrandMedia) {
+            submitData.append('orgBrandMedia', formData.orgBrandMedia);
+        }
+
+        try {
+            await axios.post('http://localhost:8080/organization/saveOrUpdateOrg', submitData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            setSuccess('Organization data submitted successfully!');
+            setError('');
+        } catch (err) {
+            setError('Failed to submit organization data.');
+            setSuccess('');
+        }
+        setLoading(false);
     };
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-lg shadow">
-                <div className="p-6 border-b border-gray-200">
-                    <div className="flex items-center">
-                        <Building2 className="w-6 h-6 text-orange-600 mr-2" />
-                        <h2 className="text-xl font-semibold text-gray-800">Add New Organization</h2>
-                    </div>
-                    <p className="text-gray-500 text-sm mt-1">Fill in the details to add a new organization</p>
-                </div>
-
-                <form onSubmit={handleSubmit} className="p-6">
-                    {/* Logo Upload */}
-                    <div className="mb-6">
-                        <h3 className="text-lg font-medium text-gray-800 mb-4">Organization Logo</h3>
-                        <div className="flex items-center space-x-6">
-                            <div className="flex-shrink-0">
-                                {formData.logoPreview ? (
-                                    <div className="relative">
-                                        <img
-                                            src={formData.logoPreview}
-                                            alt="Organization logo preview"
-                                            className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setFormData({ ...formData, logo: null, logoPreview: null })}
-                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    </div>
+        <div className="flex flex-col w-full min-h-screen bg-white">
+            {/* Navbar with hardcoded menu items */}
+            <nav className="relative flex items-center justify-between px-8 py-3 bg-orange-500 shadow">
+                <div className="flex items-center space-x-6">
+                    {/* Logo - Floating above the banner image */}
+                    <div className="">
+                        <div className="relative group w-16 h-16">
+                            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-lg overflow-hidden border-2 border-orange-300">
+                                {
+                                logoPreview ? (
+                                    <img src={logoPreview}
+                                        alt="Logo preview"
+                                        className="object-contain w-full h-full"/>
                                 ) : (
-                                    <div className="w-32 h-32 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
-                                        <ImageIcon className="w-12 h-12 text-gray-400" />
-                                    </div>
-                                )}
-                            </div>
-                            <div className="flex-1">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Upload Logo
-                                </label>
-                                <div className="flex items-center space-x-2">
-                                    <input
-                                        type="file"
-                                        accept="image/jpeg,image/png,image/jpg"
-                                        onChange={handleLogoUpload}
-                                        className="hidden"
-                                        id="logo-upload"
-                                    />
-                                    <label
-                                        htmlFor="logo-upload"
-                                        className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 cursor-pointer transition-colors"
-                                    >
-                                        <Upload className="w-4 h-4 mr-2" />
-                                        Choose Image
-                                    </label>
-                                    <span className="text-xs text-gray-500">
-                                        JPEG, PNG, JPG (Max 2MB)
+                                    <span className="text-orange-400 text-xs text-center font-semibold">Logo</span>
+                                )
+                            } </div>
+                            {/* Upload/Change icon, styled and floating over the logo */}
+                            <button type="button" className="absolute top-0 -right-3 bg-orange-500 rounded-full border-2 border-orange-300 shadow-lg p-2 hover:bg-orange-50 transition group"
+                                onClick={triggerLogoInput}
+                                tabIndex={-1}
+                                // Prevent stealing input focus
+                            >
+                                {/* Orange "upload/change" SVG */}
+                                <svg className="w-3 h-3 bg-orange-500 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                    <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
+                                    <path d="M7 10l5-5 5 5"/>
+                                    <path d="M12 4.5V16"/>
+                                </svg>
+                            </button>
+                            <input id="orgLogoInput" className="hidden" type="file" name="orgLogo" accept="image/*"
+                                onChange={handleFileChange}/>
+                        </div>
+                    </div>
+
+                    <ul className="flex items-center space-x-4">
+                        {
+                        NAV_MENU.map((item, idx) => (
+                            <li key={
+                                item.label
+                            }>
+                                <a href="#"
+                                    className={
+                                        `flex items-center space-x-1 px-3 py-1 rounded transition 
+                                    hover:bg-orange-600 text-white font-medium text-sm ${
+                                            idx === 0 ? "bg-orange-600" : ""
+                                        }`
+                                }>
+                                    {
+                                    item.icon
+                                }
+                                    <span>{
+                                        item.label
+                                    }</span>
+                                </a>
+                            </li>
+                        ))
+                    } </ul>
+                </div>
+                <button type="button"
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className={
+                        `py-2 px-6 rounded-md flex items-center justify-center font-bold
+                        shadow-lg bg-white text-orange-600 border-2 border-orange-300
+                        hover:bg-orange-50 hover:text-orange-700
+                        transition-colors ${
+                            loading ? "opacity-60 cursor-not-allowed" : ""
+                        }`
+                }>
+                    {
+                    loading ? "Submitting..." : "Submit"
+                } </button>
+            </nav>
+
+            {/* Main form section */}
+            <form onSubmit={handleSubmit}
+                encType="multipart/form-data"
+                className="flex flex-col flex-1">
+
+                {/* Banner / Brand Media - full width, whitesmoke, centered  */}
+                <div className="relative w-full mt-6">
+                    <div className="w-full bg-[#f5f5f5] rounded-xl shadow-lg overflow-hidden flex flex-col items-center justify-center min-h-[230px] border border-orange-200 mx-auto"
+                        style={
+                            {minHeight: "270px"}
+                    }>
+                        <label className="w-full h-full flex flex-col items-center justify-center cursor-pointer"
+                            onClick={triggerBannerInput}
+                            htmlFor="orgBannerInput">
+                            {
+                            brandMediaPreview ? (
+                                <img src={brandMediaPreview}
+                                    alt="Brand media preview"
+                                    className="w-full h-[270px] object-cover"/>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center w-full h-[270px]">
+                                    {/* Large orange SVG */}
+                                    <svg className="w-24 h-24 mb-4 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 64 64">
+                                        <rect x="8" y="16" width="48" height="32" rx="4" stroke="currentColor" strokeWidth="4" fill="none"/>
+                                        <path d="M20 32l8 8 16-16" stroke="currentColor" strokeWidth="4" fill="none"/>
+                                    </svg>
+                                    <span className="text-orange-600 text-lg font-semibold mt-2">
+                                        Click or Drag to Upload Banner
                                     </span>
                                 </div>
-                            </div>
-                        </div>
+                            )
+                        }
+                            <input id="orgBannerInput" type="file" name="orgBrandMedia" accept="image/*"
+                                onChange={handleFileChange}
+                                className="hidden"/>
+                        </label>
                     </div>
 
-                    {/* Basic Information */}
-                    <div className="mb-6">
-                        <h3 className="text-lg font-medium text-gray-800 mb-4">Basic Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Organization Name *
-                                </label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={formData.name}
+                </div>
+
+                {/* About section */}
+                <div className="mx-auto m-20 flex flex-col items-center w-full max-w-xl">
+                    <label className="block mb-2 text-lg font-semibold text-orange-700 text-center">
+                        Organization About
+                    </label>
+                    <textarea className="w-full h-32 p-4 border-2 border-orange-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 text-gray-600 shadow-sm resize-none" name="orgAbout" placeholder="Describe your organization..."
+                        value={
+                            formData.orgAbout
+                        }
+                        onChange={handleChange}
+                        required/>
+                </div>
+
+                {/* Form and Footer Section */}
+                <div className="mt-auto py-10 w-full bg-black border-t-2 border-orange-100">
+                    <div className="flex flex-col items-center justify-center gap-6 max-w-lg mx-auto">
+                        <div className="w-full flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
+                            <div className="flex-1">
+                                <label className="block text-sm font-semibold text-orange-200 mb-1">Organization Name</label>
+                                <input className="w-full px-4 py-2 border-2 border-orange-200 rounded focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white text-gray-800" type="text" name="orgName"
+                                    value={
+                                        formData.orgName
+                                    }
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                    placeholder="Enter organization name"
-                                />
+                                    placeholder="Organization Name"/>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Tagline
-                                </label>
-                                <input
-                                    type="text"
-                                    name="tagline"
-                                    value={formData.tagline}
+                            <div className="flex-1">
+                                <label className="block text-sm font-semibold text-orange-200 mb-1">Email</label>
+                                <input className="w-full px-4 py-2 border-2 border-orange-200 rounded focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white text-gray-800" type="email" name="orgEmail"
+                                    value={
+                                        formData.orgEmail
+                                    }
                                     onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                    placeholder="Enter tagline"
-                                />
+                                    required
+                                    placeholder="Email"/>
                             </div>
                         </div>
-
-                        <div className="mt-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Description
-                            </label>
-                            <textarea
-                                name="description"
-                                value={formData.description}
-                                onChange={handleChange}
-                                rows="3"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                placeholder="Enter organization description"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Vision & Mission */}
-                    <div className="mb-6">
-                        <h3 className="text-lg font-medium text-gray-800 mb-4">Vision & Mission</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Vision
-                                </label>
-                                <textarea
-                                    name="vision"
-                                    value={formData.vision}
+                        <div className="w-full flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
+                            <div className="flex-1">
+                                <label className="block text-sm font-semibold text-orange-200 mb-1">Phone Number</label>
+                                <input className="w-full px-4 py-2 border-2 border-orange-200 rounded focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white text-gray-800" type="text" name="orgPhone"
+                                    value={
+                                        formData.orgPhone
+                                    }
                                     onChange={handleChange}
-                                    rows="3"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                    placeholder="Enter organization vision"
-                                />
+                                    required
+                                    placeholder="Phone Number"/>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Mission
-                                </label>
-                                <textarea
-                                    name="mission"
-                                    value={formData.mission}
+                            <div className="flex-1">
+                                <label className="block text-sm font-semibold text-orange-200 mb-1">Address</label>
+                                <input className="w-full px-4 py-2 border-2 border-orange-200 rounded focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white text-gray-800" type="text" name="orgAddress"
+                                    value={
+                                        formData.orgAddress
+                                    }
                                     onChange={handleChange}
-                                    rows="3"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                    placeholder="Enter organization mission"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="mt-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Values
-                            </label>
-                            <textarea
-                                name="values"
-                                value={formData.values}
-                                onChange={handleChange}
-                                rows="2"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                placeholder="Enter organization values"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Contact Information */}
-                    <div className="mb-6">
-                        <h3 className="text-lg font-medium text-gray-800 mb-4">Contact Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    <Mail className="w-4 h-4 inline mr-1" />
-                                    Email
-                                </label>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                    placeholder="contact@organization.com"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    <Phone className="w-4 h-4 inline mr-1" />
-                                    Phone
-                                </label>
-                                <input
-                                    type="tel"
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                    placeholder="+1 234 567 8900"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="mt-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                <MapPin className="w-4 h-4 inline mr-1" />
-                                Address
-                            </label>
-                            <input
-                                type="text"
-                                name="address"
-                                value={formData.address}
-                                onChange={handleChange}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                placeholder="Organization address"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    <Globe className="w-4 h-4 inline mr-1" />
-                                    Website
-                                </label>
-                                <input
-                                    type="url"
-                                    name="website"
-                                    value={formData.website}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                    placeholder="https://organization.com"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    <Calendar className="w-4 h-4 inline mr-1" />
-                                    Established Year
-                                </label>
-                                <input
-                                    type="text"
-                                    name="establishedYear"
-                                    value={formData.establishedYear}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                    placeholder="2020"
-                                />
+                                    required
+                                    placeholder="Address"/>
                             </div>
                         </div>
                     </div>
-
-                    {/* Director Information */}
-                    <div className="mb-6">
-                        <h3 className="text-lg font-medium text-gray-800 mb-4">Director Information</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Director Name
-                                </label>
-                                <input
-                                    type="text"
-                                    name="directorName"
-                                    value={formData.directorName}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                    placeholder="Enter director name"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Director Title
-                                </label>
-                                <input
-                                    type="text"
-                                    name="directorTitle"
-                                    value={formData.directorTitle}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                    placeholder="Chairman & Director"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="mt-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Director Bio
-                            </label>
-                            <textarea
-                                name="directorBio"
-                                value={formData.directorBio}
-                                onChange={handleChange}
-                                rows="3"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                placeholder="Enter director biography"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Offerings */}
-                    <div className="mb-6">
-                        <h3 className="text-lg font-medium text-gray-800 mb-4">What We Offer</h3>
-                        {formData.offerings.map((offering, index) => (
-                            <div key={index} className="flex items-center space-x-2 mb-2">
-                                <input
-                                    type="text"
-                                    value={offering}
-                                    onChange={(e) => handleOfferingChange(index, e.target.value)}
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                    placeholder={`Offering ${index + 1}`}
-                                />
-                                {formData.offerings.length > 1 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => removeOffering(index)}
-                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                                    >
-                                        <X className="w-5 h-5" />
-                                    </button>
-                                )}
-                            </div>
-                        ))}
-                        <button
-                            type="button"
-                            onClick={addOffering}
-                            className="mt-2 text-orange-600 hover:text-orange-800 text-sm font-medium"
-                        >
-                            + Add Another Offering
-                        </button>
-                    </div>
-
-                    {/* Stats */}
-                    <div className="mb-6">
-                        <h3 className="text-lg font-medium text-gray-800 mb-4">Statistics</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Total Students
-                                </label>
-                                <input
-                                    type="number"
-                                    name="stats.students"
-                                    value={formData.stats.students}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Total Courses
-                                </label>
-                                <input
-                                    type="number"
-                                    name="stats.courses"
-                                    value={formData.stats.courses}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Total Instructors
-                                </label>
-                                <input
-                                    type="number"
-                                    name="stats.instructors"
-                                    value={formData.stats.instructors}
-                                    onChange={handleChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Form Actions */}
-                    <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-                        {onCancel && (
-                            <button
-                                type="button"
-                                onClick={onCancel}
-                                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                            >
-                                Cancel
-                            </button>
-                        )}
-                        <button
-                            type="submit"
-                            className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
-                        >
-                            <Save className="w-4 h-4 mr-2" />
-                            Save Organization
-                        </button>
-                    </div>
-                </form>
-            </div>
+                </div>
+                {/* Success, Error, Loading messages */}
+                <div className="absolute top-24 left-0 right-0 z-50 pointer-events-none">
+                    {
+                    loading && <div className="mx-auto mb-4 p-3 max-w-xs rounded bg-blue-100 text-blue-600 text-center shadow">Loading...</div>
+                }
+                    {
+                    error && <div className="mx-auto mb-4 p-3 max-w-xs rounded bg-red-100 text-red-600 text-center shadow">
+                        {error} </div>
+                }
+                    {
+                    success && <div className="mx-auto mb-4 p-3 max-w-xs rounded bg-green-100 text-green-600 text-center shadow">
+                        {success} </div>
+                } </div>
+                {/* Hide submit button here as it's in the navbar */}
+                <button type="submit" className="hidden"></button>
+            </form>
         </div>
     );
 };
